@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 
 const STYLES = {
   polygon: {
@@ -6,21 +6,47 @@ const STYLES = {
     strokeWidth: 1.5,
     vectorEffect: 'non-scaling-stroke',
   },
+  polygonSelected: {
+    fillOpacity: 0.2,
+    strokeWidth: 1.5,
+    vectorEffect: 'non-scaling-stroke',
+  },
 };
 
-export const PolygonOverlay = memo(function PolygonOverlay({ polygons }) {
+export const PolygonOverlay = memo(function PolygonOverlay({
+  isDrawMode,
+  onPolygonClick,
+  polygons,
+  selectedPolygonId,
+}) {
+  const handleClick = useCallback(
+    (e, polyId) => {
+      e.stopPropagation();
+      onPolygonClick?.(polyId);
+    },
+    [onPolygonClick],
+  );
+
+  if (!polygons?.length) return null;
+
   return (
     <>
-      {polygons.map((poly) => (
-        <polygon
-          fill={poly.color}
-          key={poly.id}
-          points={poly.points.map((p) => `${p[0] * 1000},${p[1] * 1000}`).join(' ')}
-          stroke={poly.color}
-          style={{ filter: `drop-shadow(0 0 4px ${poly.color})` }}
-          {...STYLES.polygon}
-        />
-      ))}
+      {polygons.map((poly) => {
+        const isSelected = poly.id === selectedPolygonId;
+        return (
+          <polygon
+            cursor={isDrawMode ? 'crosshair' : 'pointer'}
+            fill={poly.color}
+            key={poly.id}
+            onClick={(e) => handleClick(e, poly.id)}
+            pointerEvents={isDrawMode ? 'none' : 'auto'}
+            points={poly.points.map((p) => `${p[0] * 1000},${p[1] * 1000}`).join(' ')}
+            stroke={poly.color}
+            style={{ filter: `drop-shadow(0 0 ${isSelected ? '8' : '4'}px ${poly.color})` }}
+            {...(isSelected ? STYLES.polygonSelected : STYLES.polygon)}
+          />
+        );
+      })}
     </>
   );
 });

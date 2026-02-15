@@ -40,6 +40,8 @@ const STYLES = {
 };
 
 export const PolygonAnnotations = memo(function PolygonAnnotations({ polygons }) {
+  if (!polygons?.length) return null;
+
   return (
     <div style={STYLES.overlay}>
       {polygons.map((poly) => {
@@ -67,7 +69,7 @@ export const PolygonAnnotations = memo(function PolygonAnnotations({ polygons })
             })}
             <div style={labelWrapperStyle}>
               <div style={labelBoxStyle}>
-                <span style={STYLES.labelText}>{poly.id}</span>
+                <span style={STYLES.labelText}>{poly.name ?? poly.id}</span>
               </div>
             </div>
           </Fragment>

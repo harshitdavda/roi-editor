@@ -77,6 +77,7 @@ export const ROIToolbar = memo(function ROIToolbar({
   canUndo,
   currentColor,
   isDrawMode,
+  onChangeColor,
   onExitDrawMode,
   onRedo,
   onSelectColor,
@@ -85,23 +86,19 @@ export const ROIToolbar = memo(function ROIToolbar({
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const pencilWrapperRef = useRef(null);
 
-  useEffect(() => {
-    if (isDrawMode) {
-      setColorPickerOpen(false);
-    }
-  }, [isDrawMode]);
-
   const handlePencilClick = useEventCallback(() => {
-    if (isDrawMode) {
-      onExitDrawMode();
-      setColorPickerOpen(false);
-    } else {
-      setColorPickerOpen(!colorPickerOpen);
-    }
+    // always toggle the color picker (works both in and out of draw mode)
+    setColorPickerOpen(!colorPickerOpen);
   });
 
   const handleColorSelect = useEventCallback((color) => {
-    onSelectColor(color);
+    if (isDrawMode) {
+      // just change color without resetting the drawing
+      onChangeColor(color);
+    } else {
+      // start drawing with the selected color
+      onSelectColor(color);
+    }
     setColorPickerOpen(false);
   });
 

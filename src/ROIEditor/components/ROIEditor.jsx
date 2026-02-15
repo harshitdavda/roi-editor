@@ -17,6 +17,9 @@ const STYLES = {
 export const ROIEditor = memo(function ROIEditor({ data, onAction }) {
   const editor = useROIEditor({ data, onAction });
 
+  const isDrawMode = data.isDrawMode ?? false;
+  const polygons = data.polygons ?? [];
+
   return (
     <div style={STYLES.root}>
       <ROICanvas
@@ -24,18 +27,21 @@ export const ROIEditor = memo(function ROIEditor({ data, onAction }) {
         currentColor={editor.currentColor}
         currentPoints={editor.currentPoints}
         imageUrl={data.imageUrl}
-        isDrawMode={data.isDrawMode}
+        isDrawMode={isDrawMode}
         mousePos={editor.mousePos}
         onCanvasClick={editor.handleCanvasClick}
         onMouseLeave={editor.handleMouseLeave}
         onMouseMove={editor.handleMouseMove}
-        polygons={data.polygons}
+        onPolygonClick={editor.handlePolygonClick}
+        polygons={polygons}
+        selectedPolygonId={editor.selectedPolygonId}
       />
       <ROIToolbar
         canRedo={editor.canRedo}
         canUndo={editor.canUndo}
         currentColor={editor.currentColor}
-        isDrawMode={data.isDrawMode}
+        isDrawMode={isDrawMode}
+        onChangeColor={editor.changeColor}
         onExitDrawMode={editor.exitDrawMode}
         onRedo={editor.handleRedo}
         onSelectColor={editor.startDrawingWithColor}

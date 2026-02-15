@@ -19,6 +19,10 @@ export default function Imageeditorroi(props) {
     emitOnChange({ action });
   }, [emitOnChange]);
 
+  if (!data?.imageUrl) {
+    return null;
+  }
+
   return (
     <div style={STYLES.root}>
       <ROIEditor data={data} onAction={onAction} />

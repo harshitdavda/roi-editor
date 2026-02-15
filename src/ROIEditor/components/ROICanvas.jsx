@@ -61,7 +61,9 @@ export const ROICanvas = memo(function ROICanvas({
   onCanvasClick,
   onMouseLeave,
   onMouseMove,
+  onPolygonClick,
   polygons,
+  selectedPolygonId,
 }) {
   const [aspectRatio, setAspectRatio] = useState(null);
   const [canvasSize, setCanvasSize] = useState(null);
@@ -120,7 +122,12 @@ export const ROICanvas = memo(function ROICanvas({
         <img alt="CCTV" onLoad={handleImageLoad} src={imageUrl} style={STYLES.img} />
 
         <svg preserveAspectRatio="none" style={STYLES.svgLayer} viewBox="0 0 1000 1000">
-          <PolygonOverlay polygons={polygons} />
+          <PolygonOverlay
+            isDrawMode={isDrawMode}
+            onPolygonClick={onPolygonClick}
+            polygons={polygons}
+            selectedPolygonId={selectedPolygonId}
+          />
           <DrawingOverlay
             currentColor={currentColor}
             currentPoints={currentPoints}

@@ -6,15 +6,17 @@ import { useROIHistory } from './useROIHistory';
 const CLOSE_THRESHOLD = 0.02;
 
 export function useROIEditor({ data, onAction }) {
-  const { isDrawMode } = data;
+  const isDrawMode = data.isDrawMode ?? false;
+  const polygons = data.polygons ?? [];
 
   const [currentPoints, setCurrentPoints] = useState([]);
   const [redoPoints, setRedoPoints] = useState([]);
   const [currentColor, setCurrentColor] = useState('#DF00FF');
   const [mousePos, setMousePos] = useState(null);
+  const [selectedPolygonId, setSelectedPolygonId] = useState(null);
 
   const containerRef = useRef(null);
-  const history = useROIHistory(data.polygons);
+  const history = useROIHistory(polygons);
 
   /** clear drawing state when exiting draw mode (cancel, complete, or parent-driven) */
   useEffect(() => {
@@ -25,22 +27,41 @@ export function useROIEditor({ data, onAction }) {
     }
   }, [isDrawMode]);
 
-  /** Esc key cancels drawing */
+  /** clear selection when entering draw mode */
   useEffect(() => {
-    if (!isDrawMode) return;
+    if (isDrawMode) {
+      setSelectedPolygonId(null);
+    }
+  }, [isDrawMode]);
+
+  /** clear selection if selected polygon was removed externally */
+  useEffect(() => {
+    if (selectedPolygonId && !polygons.find((p) => p.id === selectedPolygonId)) {
+      setSelectedPolygonId(null);
+    }
+  }, [polygons, selectedPolygonId]);
+
+  /** Esc key cancels drawing; Backspace/Delete removes selected polygon */
+  useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && isDrawMode) {
         onAction({ type: 'DRAW_MODE_CHANGE', isDrawMode: false });
+        return;
+      }
+      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedPolygonId && !isDrawMode) {
+        e.preventDefault();
+        const updated = polygons.filter((p) => p.id !== selectedPolygonId);
+        setSelectedPolygonId(null);
+        onAction({ type: 'SET_POLYGONS', polygons: updated });
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDrawMode, onAction]);
+  }, [isDrawMode, onAction, selectedPolygonId, polygons]);
 
   const handleUndo = useEventCallback(() => {
     if (isDrawMode) {
       if (currentPoints.length === 1) {
-        // undoing the last point — cancel drawing entirely
         onAction({ type: 'DRAW_MODE_CHANGE', isDrawMode: false });
       } else if (currentPoints.length > 0) {
         const lastPoint = currentPoints[currentPoints.length - 1];
@@ -48,9 +69,9 @@ export function useROIEditor({ data, onAction }) {
         setCurrentPoints((prev) => prev.slice(0, -1));
       }
     } else {
-      const polygons = history.undo();
-      if (polygons) {
-        onAction({ type: 'SET_POLYGONS', polygons });
+      const result = history.undo();
+      if (result) {
+        onAction({ type: 'SET_POLYGONS', polygons: result });
       }
     }
   });
@@ -63,15 +84,21 @@ export function useROIEditor({ data, onAction }) {
         setCurrentPoints((prev) => [...prev, point]);
       }
     } else {
-      const polygons = history.redo();
-      if (polygons) {
-        onAction({ type: 'SET_POLYGONS', polygons });
+      const result = history.redo();
+      if (result) {
+        onAction({ type: 'SET_POLYGONS', polygons: result });
       }
     }
   });
 
   const handleCanvasClick = useEventCallback((e) => {
-    if (!isDrawMode || !containerRef.current) return;
+    // deselect polygon when clicking canvas (not on a polygon)
+    if (!isDrawMode) {
+      setSelectedPolygonId(null);
+      return;
+    }
+
+    if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
     const x = (e.clientX - rect.left) / rect.width;
@@ -92,6 +119,11 @@ export function useROIEditor({ data, onAction }) {
 
     setCurrentPoints((prev) => [...prev, [x, y]]);
     setRedoPoints([]);
+  });
+
+  const handlePolygonClick = useEventCallback((polygonId) => {
+    if (isDrawMode) return;
+    setSelectedPolygonId((prev) => (prev === polygonId ? null : polygonId));
   });
 
   const handleMouseMove = useEventCallback((e) => {
@@ -116,6 +148,11 @@ export function useROIEditor({ data, onAction }) {
     onAction({ type: 'DRAW_MODE_CHANGE', isDrawMode: false });
   });
 
+  /** change color without affecting draw mode state */
+  const changeColor = useEventCallback((color) => {
+    setCurrentColor(color);
+  });
+
   const startDrawingWithColor = useEventCallback((color) => {
     setCurrentColor(color);
     onAction({ type: 'DRAW_MODE_CHANGE', isDrawMode: true });
@@ -125,15 +162,18 @@ export function useROIEditor({ data, onAction }) {
     currentPoints,
     currentColor,
     mousePos,
+    selectedPolygonId,
     canUndo: isDrawMode ? currentPoints.length > 0 : history.canUndo,
     canRedo: isDrawMode ? redoPoints.length > 0 : history.canRedo,
 
     handleUndo,
     handleRedo,
     handleCanvasClick,
+    handlePolygonClick,
     handleMouseMove,
     handleMouseLeave,
     exitDrawMode,
+    changeColor,
     startDrawingWithColor,
 
     containerRef,
