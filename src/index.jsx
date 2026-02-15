@@ -1,5 +1,15 @@
 import React, { useCallback } from 'react';
 import { ROIEditor } from './ROIEditor/components/ROIEditor';
+import './style.css';
+
+const STYLES = {
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    overflow: 'hidden',
+  },
+};
 
 export default function Imageeditorroi(props) {
   const { data, emitOnChange } = props;
@@ -9,5 +19,9 @@ export default function Imageeditorroi(props) {
     emitOnChange({ action });
   }, [emitOnChange]);
 
-  return <ROIEditor data={data} onAction={onAction} />;
+  return (
+    <div style={STYLES.root}>
+      <ROIEditor data={data} onAction={onAction} />
+    </div>
+  );
 }
