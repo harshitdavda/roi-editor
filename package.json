@@ -1,0 +1,15 @@
+{
+  "name": "image-editor-roi",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.jsx",
+  "scripts": {
+    "dev": "pnpx @unifyapps/custom-component-cli dev image-editor-roi",
+    "build": "pnpx @unifyapps/custom-component-cli build image-editor-roi"
+  },
+  "dependencies": {
+    "@unifyapps/custom-component-cli": "^0.0.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  }
+}

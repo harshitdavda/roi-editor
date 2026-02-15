@@ -1,0 +1,7 @@
+{
+  "name": "Imageeditorroi",
+  "type": "ImageEditorROI",
+  "entry": "./src/index.jsx",
+  "keywords": "ImageEditorROI",
+  "style": "./src/style.css"
+}
